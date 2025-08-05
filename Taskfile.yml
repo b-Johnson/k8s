@@ -306,3 +306,35 @@ tasks:
     desc: Check nginx configuration
     cmds:
       - ./scripts/test-nginx.sh config
+
+  # Port forwarding tasks for nginx access
+  nginx-forward:
+    desc: Port forward to simple nginx service
+    cmds:
+      - echo "Nginx will be available at http://localhost:8080"
+      - kubectl port-forward svc/nginx-service -n nginx-app 8080:80
+
+  nginx-forward-dev:
+    desc: Port forward to development nginx service
+    cmds:
+      - echo "Development nginx will be available at http://localhost:8081"
+      - kubectl port-forward svc/dev-nginx-service -n nginx-app 8081:80
+
+  nginx-forward-prod:
+    desc: Port forward to production nginx service
+    cmds:
+      - echo "Production nginx will be available at http://localhost:8082"
+      - kubectl port-forward svc/prod-nginx-service -n nginx-app 8082:80
+
+  nginx-open:
+    desc: Open nginx in browser (requires port-forward to be running)
+    cmds:
+      - open http://localhost:8080 || echo "Run 'task nginx-forward' first"
+
+  nginx-test-local:
+    desc: Test nginx from local machine (requires port-forward)
+    cmds:
+      - echo "Testing nginx services (make sure port-forwards are running)..."
+      - curl -s http://localhost:8080/health 2>/dev/null && echo " Simple nginx - OK" || echo "✗ Simple nginx - Failed"
+      - curl -s http://localhost:8081/health 2>/dev/null && echo " Dev nginx - OK" || echo "✗ Dev nginx - Failed"
+      - curl -s http://localhost:8082/health 2>/dev/null && echo " Prod nginx - OK" || echo "✗ Prod nginx - Failed"

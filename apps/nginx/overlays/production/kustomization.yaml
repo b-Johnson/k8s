@@ -72,12 +72,12 @@ patches:
           </head>
           <body>
               <div class="container">
-                  <h1>🚀 Nginx Kubernetes Application - PRODUCTION</h1>
+                  <h1> Nginx Kubernetes Application - PRODUCTION</h1>
                   <div class="info">
                       <p><strong>Status:</strong> Successfully deployed with ArgoCD!</p>
                       <p><strong>Application:</strong> Nginx Web Server</p>
                       <p><strong>Deployment:</strong> Kubernetes + ArgoCD</p>
-                      <p><strong>Environment:</strong> 🚀 Production 🚀</p>
+                      <p><strong>Environment:</strong> Production</p>
                       <p><strong>Replicas:</strong> 5 (High Availability)</p>
                   </div>
                   <p>This is the <strong>production</strong> version of the nginx application running in Kubernetes and managed by ArgoCD.</p>
