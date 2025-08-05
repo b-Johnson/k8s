@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: nginx-apps
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: nginx-project
+spec:
+  description: Project for Nginx applications
+  
+  sourceRepos:
+    - 'https://github.com/b-Johnson/k8s.git'
+  
+  destinations:
+    - namespace: nginx-app
+      server: https://kubernetes.default.svc
+    - namespace: nginx-app-*
+      server: https://kubernetes.default.svc
+  
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+  
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Secret
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: ReplicaSet
+    - group: ''
+      kind: Pod
+    - group: networking.k8s.io
+      kind: Ingress
+  
+  roles:
+    - name: read-only
+      description: Read-only privileges to nginx apps
+      policies:
+        - p, proj:nginx-apps:read-only, applications, get, nginx-apps/*, allow
+        - p, proj:nginx-apps:read-only, applications, sync, nginx-apps/*, deny
+      groups:
+        - nginx-readonly-group
+    
+    - name: dev-team
+      description: Developer team privileges
+      policies:
+        - p, proj:nginx-apps:dev-team, applications, *, nginx-apps/nginx-development, allow
+        - p, proj:nginx-apps:dev-team, applications, get, nginx-apps/nginx-production, allow
+        - p, proj:nginx-apps:dev-team, applications, sync, nginx-apps/nginx-production, deny
+      groups:
+        - nginx-dev-team

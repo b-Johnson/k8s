@@ -1,4 +1,32 @@
+# Kubernetes and DevOps specific
+*.log
+.kube/
+kubeconfig*
+secrets/
+*.key
+*.crt
+*.pem
+
+# Temporary files
+/tmp/
+*.tmp
+*.yaml.tmp
+*.yml.tmp
+
+# IDE and editor files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
 # Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.socompiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class

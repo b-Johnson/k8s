@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nginx-base
+
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - configmap.yaml
+
+commonLabels:
+  app.kubernetes.io/name: nginx
+  app.kubernetes.io/version: "1.25"
+  app.kubernetes.io/managed-by: argocd
+
+patches:
+  - target:
+      kind: Deployment
+      name: nginx-deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: nginx-config
+            configMap:
+              name: nginx-config
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts
+        value:
+          - name: nginx-config
+            mountPath: /usr/share/nginx/html/index.html
+            subPath: index.html

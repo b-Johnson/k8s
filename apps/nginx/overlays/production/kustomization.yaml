@@ -1,0 +1,103 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nginx-production
+
+namespace: nginx-app
+
+resources:
+  - ../../base
+
+namePrefix: prod-
+
+commonLabels:
+  environment: production
+
+patches:
+  - target:
+      kind: Deployment
+      name: nginx-deployment
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 5
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "128Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "200m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "500m"
+
+  - target:
+      kind: ConfigMap
+      name: nginx-config
+    patch: |-
+      - op: replace
+        path: /data/index.html
+        value: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Nginx K8s App - Production</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      margin: 40px;
+                      background-color: #d1ecf1;
+                  }
+                  .container {
+                      background-color: white;
+                      padding: 20px;
+                      border-radius: 8px;
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                  }
+                  h1 {
+                      color: #0c5460;
+                      text-align: center;
+                  }
+                  .info {
+                      background-color: #d1ecf1;
+                      padding: 15px;
+                      border-left: 4px solid #17a2b8;
+                      margin: 20px 0;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🚀 Nginx Kubernetes Application - PRODUCTION</h1>
+                  <div class="info">
+                      <p><strong>Status:</strong> Successfully deployed with ArgoCD!</p>
+                      <p><strong>Application:</strong> Nginx Web Server</p>
+                      <p><strong>Deployment:</strong> Kubernetes + ArgoCD</p>
+                      <p><strong>Environment:</strong> 🚀 Production 🚀</p>
+                      <p><strong>Replicas:</strong> 5 (High Availability)</p>
+                  </div>
+                  <p>This is the <strong>production</strong> version of the nginx application running in Kubernetes and managed by ArgoCD.</p>
+              </div>
+          </body>
+          </html>
+
+  - target:
+      kind: Ingress
+      name: nginx-ingress
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: nginx.production.local
+      - op: add
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-prod
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts:
+              - nginx.production.local
+            secretName: nginx-tls

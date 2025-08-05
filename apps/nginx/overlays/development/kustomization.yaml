@@ -1,0 +1,80 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nginx-development
+
+namespace: nginx-app
+
+resources:
+  - ../../base
+
+namePrefix: dev-
+
+commonLabels:
+  environment: development
+
+patches:
+  - target:
+      kind: Deployment
+      name: nginx-deployment
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "32Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "64Mi"
+
+  - target:
+      kind: ConfigMap
+      name: nginx-config
+    patch: |-
+      - op: replace
+        path: /data/index.html
+        value: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Nginx K8s App - Development</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      margin: 40px;
+                      background-color: #fff3cd;
+                  }
+                  .container {
+                      background-color: white;
+                      padding: 20px;
+                      border-radius: 8px;
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                  }
+                  h1 {
+                      color: #856404;
+                      text-align: center;
+                  }
+                  .info {
+                      background-color: #fff3cd;
+                      padding: 15px;
+                      border-left: 4px solid #ffc107;
+                      margin: 20px 0;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🚧 Nginx Kubernetes Application - DEVELOPMENT</h1>
+                  <div class="info">
+                      <p><strong>Status:</strong> Successfully deployed with ArgoCD!</p>
+                      <p><strong>Application:</strong> Nginx Web Server</p>
+                      <p><strong>Deployment:</strong> Kubernetes + ArgoCD</p>
+                      <p><strong>Environment:</strong> 🚧 Development 🚧</p>
+                      <p><strong>Replicas:</strong> 1 (Development)</p>
+                  </div>
+                  <p>This is the <strong>development</strong> version of the nginx application running in Kubernetes and managed by ArgoCD.</p>
+              </div>
+          </body>
+          </html>

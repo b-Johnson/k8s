@@ -1,0 +1,270 @@
+version: '3'
+
+vars:
+  PROJECT_ROOT: '{{.PWD}}'
+  NAMESPACE: nginx-app
+  ARGOCD_NAMESPACE: argocd
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  validate:
+    desc: Validate all Kubernetes manifests
+    cmds:
+      - ./scripts/validate.sh all
+
+  validate-base:
+    desc: Validate base manifests only
+    cmds:
+      - ./scripts/validate.sh base
+
+  validate-dev:
+    desc: Validate development overlay
+    cmds:
+      - ./scripts/validate.sh dev
+
+  validate-prod:
+    desc: Validate production overlay
+    cmds:
+      - ./scripts/validate.sh prod
+
+  check:
+    desc: Check if kubectl is working
+    cmds:
+      - ./scripts/deploy.sh check
+
+  install-argocd:
+    desc: Install ArgoCD in the cluster
+    cmds:
+      - ./scripts/deploy.sh install-argocd
+
+  deploy-nginx:
+    desc: Deploy nginx applications to ArgoCD
+    cmds:
+      - ./scripts/deploy.sh deploy-nginx
+
+  deploy-all:
+    desc: Deploy everything (ArgoCD + nginx)
+    cmds:
+      - ./scripts/deploy.sh all
+
+  test:
+    desc: Test the nginx deployment
+    cmds:
+      - ./scripts/deploy.sh test
+
+  port-forward:
+    desc: Setup port forwarding for ArgoCD UI
+    cmds:
+      - ./scripts/deploy.sh port-forward
+
+  password:
+    desc: Get ArgoCD admin password
+    cmds:
+      - ./scripts/deploy.sh password
+
+  status:
+    desc: Show status of all components
+    cmds:
+      - echo "=== ArgoCD Applications ==="
+      - kubectl get applications -n {{.ARGOCD_NAMESPACE}} 2>/dev/null || echo "ArgoCD not found or not accessible"
+      - echo ""
+      - echo "=== Nginx Pods ==="
+      - kubectl get pods -n {{.NAMESPACE}} 2>/dev/null || echo "Nginx namespace not found"
+      - echo ""
+      - echo "=== Nginx Services ==="
+      - kubectl get svc -n {{.NAMESPACE}} 2>/dev/null || echo "Nginx namespace not found"
+      - echo ""
+      - echo "=== Nginx Ingress ==="
+      - kubectl get ingress -n {{.NAMESPACE}} 2>/dev/null || echo "Nginx namespace not found"
+
+  logs-dev:
+    desc: Show development nginx logs
+    cmds:
+      - kubectl logs -l app.kubernetes.io/name=nginx,environment=development -n {{.NAMESPACE}} --tail=50
+
+  logs-prod:
+    desc: Show production nginx logs
+    cmds:
+      - kubectl logs -l app.kubernetes.io/name=nginx,environment=production -n {{.NAMESPACE}} --tail=50
+
+  logs-argocd:
+    desc: Show ArgoCD application controller logs
+    cmds:
+      - kubectl logs -n {{.ARGOCD_NAMESPACE}} deployment/argocd-application-controller --tail=50
+
+  build-dev:
+    desc: Build development manifests with kustomize
+    cmds:
+      - kustomize build apps/nginx/overlays/development
+
+  build-prod:
+    desc: Build production manifests with kustomize
+    cmds:
+      - kustomize build apps/nginx/overlays/production
+
+  build-base:
+    desc: Build base manifests with kustomize
+    cmds:
+      - kustomize build apps/nginx/base
+
+  diff:
+    desc: Show differences between development and production
+    cmds:
+      - ./scripts/validate.sh diff
+
+  clean:
+    desc: Clean up nginx deployments
+    cmds:
+      - kubectl delete application nginx-development -n {{.ARGOCD_NAMESPACE}} --ignore-not-found
+      - kubectl delete application nginx-production -n {{.ARGOCD_NAMESPACE}} --ignore-not-found
+      - kubectl delete appproject nginx-apps -n {{.ARGOCD_NAMESPACE}} --ignore-not-found
+      - kubectl delete namespace {{.NAMESPACE}} --ignore-not-found
+
+  clean-argocd:
+    desc: Clean up ArgoCD installation
+    cmds:
+      - kubectl delete namespace {{.ARGOCD_NAMESPACE}} --ignore-not-found
+
+  restart-dev:
+    desc: Restart development nginx deployment
+    cmds:
+      - kubectl rollout restart deployment/dev-nginx-deployment -n {{.NAMESPACE}}
+
+  restart-prod:
+    desc: Restart production nginx deployment
+    cmds:
+      - kubectl rollout restart deployment/prod-nginx-deployment -n {{.NAMESPACE}}
+
+  scale-dev:
+    desc: Scale development nginx deployment
+    prompt: How many replicas for development?
+    cmds:
+      - kubectl scale deployment/dev-nginx-deployment -n {{.NAMESPACE}} --replicas={{.CLI_ARGS}}
+
+  scale-prod:
+    desc: Scale production nginx deployment
+    prompt: How many replicas for production?
+    cmds:
+      - kubectl scale deployment/prod-nginx-deployment -n {{.NAMESPACE}} --replicas={{.CLI_ARGS}}
+
+  sync-dev:
+    desc: Manually sync development application in ArgoCD
+    cmds:
+      - kubectl patch application nginx-development -n {{.ARGOCD_NAMESPACE}} -p '{"operation":{"sync":{}}}' --type merge
+
+  sync-prod:
+    desc: Manually sync production application in ArgoCD
+    cmds:
+      - kubectl patch application nginx-production -n {{.ARGOCD_NAMESPACE}} -p '{"operation":{"sync":{}}}' --type merge
+
+  debug-dev:
+    desc: Debug development deployment
+    cmds:
+      - echo "=== Development Deployment Description ==="
+      - kubectl describe deployment/dev-nginx-deployment -n {{.NAMESPACE}}
+      - echo ""
+      - echo "=== Development Pods ==="
+      - kubectl get pods -l app.kubernetes.io/name=nginx,environment=development -n {{.NAMESPACE}} -o wide
+      - echo ""
+      - echo "=== Development Events ==="
+      - kubectl get events -n {{.NAMESPACE}} --sort-by='.lastTimestamp' | tail -10
+
+  debug-prod:
+    desc: Debug production deployment
+    cmds:
+      - echo "=== Production Deployment Description ==="
+      - kubectl describe deployment/prod-nginx-deployment -n {{.NAMESPACE}}
+      - echo ""
+      - echo "=== Production Pods ==="
+      - kubectl get pods -l app.kubernetes.io/name=nginx,environment=production -n {{.NAMESPACE}} -o wide
+      - echo ""
+      - echo "=== Production Events ==="
+      - kubectl get events -n {{.NAMESPACE}} --sort-by='.lastTimestamp' | tail -10
+
+  test-connection:
+    desc: Test nginx service connections
+    cmds:
+      - echo "Testing development service..."
+      - kubectl run nginx-test-dev --image=curlimages/curl --rm -it --restart=Never -- curl -s http://dev-nginx-service.{{.NAMESPACE}}.svc.cluster.local || echo "Development service test failed"
+      - echo "Testing production service..."
+      - kubectl run nginx-test-prod --image=curlimages/curl --rm -it --restart=Never -- curl -s http://prod-nginx-service.{{.NAMESPACE}}.svc.cluster.local || echo "Production service test failed"
+
+  watch:
+    desc: Watch nginx pods status
+    cmds:
+      - watch kubectl get pods -n {{.NAMESPACE}}
+
+  top:
+    desc: Show resource usage for nginx pods
+    cmds:
+      - kubectl top pods -n {{.NAMESPACE}} 2>/dev/null || echo "Metrics server not available"
+
+  describe-apps:
+    desc: Describe ArgoCD applications
+    cmds:
+      - echo "=== Development Application ==="
+      - kubectl describe application nginx-development -n {{.ARGOCD_NAMESPACE}}
+      - echo ""
+      - echo "=== Production Application ==="
+      - kubectl describe application nginx-production -n {{.ARGOCD_NAMESPACE}}
+
+  # Local development tasks
+  local-create:
+    desc: Create local kind cluster
+    cmds:
+      - ./local/setup-local.sh create
+
+  local-delete:
+    desc: Delete local kind cluster
+    cmds:
+      - ./local/setup-local.sh delete
+
+  local-deploy:
+    desc: Deploy to local cluster
+    cmds:
+      - ./local/setup-local.sh deploy
+
+  local-test:
+    desc: Test local deployment
+    cmds:
+      - ./local/setup-local.sh test
+
+  local-all:
+    desc: Complete local setup
+    cmds:
+      - ./local/setup-local.sh all
+
+  local-info:
+    desc: Show local cluster information
+    cmds:
+      - ./local/setup-local.sh info
+
+  # Simple testing tasks (without ArgoCD)
+  test-simple:
+    desc: Run simple nginx test without ArgoCD
+    cmds:
+      - ./scripts/test-simple.sh all
+
+  test-kubectl:
+    desc: Test kubectl connectivity
+    cmds:
+      - ./scripts/test-simple.sh test-kubectl
+
+  test-manifests:
+    desc: Validate manifest syntax
+    cmds:
+      - ./scripts/test-simple.sh validate
+
+  deploy-simple:
+    desc: Deploy nginx directly (no ArgoCD)
+    cmds:
+      - ./scripts/test-simple.sh deploy
+
+  cleanup-simple:
+    desc: Clean up simple nginx deployment
+    cmds:
+      - ./scripts/test-simple.sh cleanup
