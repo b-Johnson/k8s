@@ -7,16 +7,16 @@ metadata:
     app.kubernetes.io/name: nginx-project
 spec:
   description: Project for Nginx applications
-  
+
   sourceRepos:
     - 'https://github.com/b-Johnson/k8s.git'
-  
+
   destinations:
     - namespace: nginx-app
       server: https://kubernetes.default.svc
     - namespace: nginx-app-*
       server: https://kubernetes.default.svc
-  
+
   clusterResourceWhitelist:
     - group: ''
       kind: Namespace
@@ -24,7 +24,7 @@ spec:
       kind: Ingress
     - group: networking.k8s.io
       kind: NetworkPolicy
-  
+
   namespaceResourceWhitelist:
     - group: ''
       kind: ConfigMap
@@ -42,7 +42,7 @@ spec:
       kind: Pod
     - group: networking.k8s.io
       kind: Ingress
-  
+
   roles:
     - name: read-only
       description: Read-only privileges to nginx apps
@@ -51,7 +51,7 @@ spec:
         - p, proj:nginx-apps:read-only, applications, sync, nginx-apps/*, deny
       groups:
         - nginx-readonly-group
-    
+
     - name: dev-team
       description: Developer team privileges
       policies:

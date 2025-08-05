@@ -44,91 +44,91 @@ check_kind() {
 # Create kind cluster
 create_cluster() {
     log "Creating kind cluster: $CLUSTER_NAME"
-    
+
     if kind get clusters | grep -q "$CLUSTER_NAME"; then
         warn "Cluster $CLUSTER_NAME already exists"
         return 0
     fi
-    
+
     kind create cluster --config="$SCRIPT_DIR/kind-config.yaml"
-    
+
     # Wait for cluster to be ready
     log "Waiting for cluster to be ready..."
     kubectl wait --for=condition=ready nodes --all --timeout=300s
-    
+
     log "Kind cluster created successfully"
 }
 
 # Install ingress controller
 install_ingress() {
     log "Installing nginx ingress controller..."
-    
+
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-    
+
     # Wait for ingress controller to be ready
     log "Waiting for ingress controller to be ready..."
     kubectl wait --namespace ingress-nginx \
         --for=condition=ready pod \
         --selector=app.kubernetes.io/component=controller \
         --timeout=300s
-    
+
     log "Nginx ingress controller installed successfully"
 }
 
 # Setup local DNS for testing
 setup_dns() {
     log "Setting up local DNS entries..."
-    
+
     # Check if entries already exist
     if grep -q "nginx.local" /etc/hosts 2>/dev/null; then
         warn "DNS entries already exist in /etc/hosts"
         return 0
     fi
-    
+
     info "Adding DNS entries to /etc/hosts (requires sudo):"
     info "127.0.0.1 nginx.local"
     info "127.0.0.1 nginx.production.local"
-    
+
     echo "127.0.0.1 nginx.local" | sudo tee -a /etc/hosts
     echo "127.0.0.1 nginx.production.local" | sudo tee -a /etc/hosts
-    
+
     log "DNS entries added successfully"
 }
 
 # Remove DNS entries
 cleanup_dns() {
     log "Removing DNS entries from /etc/hosts..."
-    
+
     sudo sed -i '' '/nginx\.local/d' /etc/hosts 2>/dev/null || true
     sudo sed -i '' '/nginx\.production\.local/d' /etc/hosts 2>/dev/null || true
-    
+
     log "DNS entries removed"
 }
 
 # Delete kind cluster
 delete_cluster() {
     log "Deleting kind cluster: $CLUSTER_NAME"
-    
+
     if ! kind get clusters | grep -q "$CLUSTER_NAME"; then
         warn "Cluster $CLUSTER_NAME does not exist"
         return 0
     fi
-    
+
     kind delete cluster --name="$CLUSTER_NAME"
     cleanup_dns
-    
+
     log "Kind cluster deleted successfully"
 }
 
 # Get cluster info
 cluster_info() {
     log "Kind cluster information:"
-    
+
     if ! kind get clusters | grep -q "$CLUSTER_NAME"; then
         warn "Cluster $CLUSTER_NAME does not exist"
         return 1
     fi
-    
+
     echo
     info "Cluster: $CLUSTER_NAME"
     info "Nodes:"
@@ -144,35 +144,35 @@ cluster_info() {
 # Deploy demo application
 deploy_demo() {
     log "Deploying nginx application to local cluster..."
-    
+
     # First check if kubectl is working
     if ! "$PROJECT_ROOT/scripts/deploy.sh" check; then
         error "kubectl connectivity check failed"
     fi
-    
+
     # Install ArgoCD first
     log "Installing ArgoCD..."
     if ! "$PROJECT_ROOT/scripts/deploy.sh" install-argocd; then
         error "ArgoCD installation failed"
     fi
-    
+
     # Wait a bit more for ArgoCD to be fully ready
     log "Waiting for ArgoCD to be fully operational..."
     sleep 30
-    
+
     # Verify ArgoCD is ready before deploying apps
-    if ! kubectl get deployment argocd-application-controller -n argocd &>/dev/null; then
+    if ! kubectl get statefulset argocd-application-controller -n argocd &>/dev/null; then
         error "ArgoCD application controller not found"
     fi
-    
+
     # Deploy nginx applications
     log "Deploying nginx applications..."
     if ! "$PROJECT_ROOT/scripts/deploy.sh" deploy-nginx; then
         error "Nginx application deployment failed"
     fi
-    
+
     log "Demo application deployed successfully"
-    
+
     info "Access points:"
     info "- ArgoCD UI: https://localhost:8080 (run 'task port-forward')"
     info "- Development app: http://nginx.local"
@@ -182,7 +182,7 @@ deploy_demo() {
 # Test local deployment
 test_local() {
     log "Testing local deployment..."
-    
+
     # Test nginx service accessibility
     log "Testing nginx services..."
     kubectl run nginx-test --image=curlimages/curl --rm -it --restart=Never -- sh -c "
@@ -191,7 +191,7 @@ test_local() {
         echo 'Testing production service:'
         curl -s http://prod-nginx-service.nginx-app.svc.cluster.local | grep -o '<title>.*</title>' || echo 'Production service not accessible'
     " || warn "Some services may not be accessible yet"
-    
+
     # Test ingress (if available)
     log "Testing ingress accessibility..."
     if curl -s http://nginx.local >/dev/null 2>&1; then
@@ -199,7 +199,7 @@ test_local() {
     else
         warn "Development app not yet accessible via ingress"
     fi
-    
+
     if curl -s http://nginx.production.local >/dev/null 2>&1; then
         info "Production app accessible at: http://nginx.production.local"
     else

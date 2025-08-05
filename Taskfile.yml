@@ -61,6 +61,17 @@ tasks:
     cmds:
       - ./scripts/deploy.sh port-forward
 
+  port-forward-8082:
+    desc: Setup port forwarding for ArgoCD UI on port 8082
+    cmds:
+      - ./scripts/deploy.sh port-forward-8082
+
+  test-argocd-8082:
+    desc: Test ArgoCD connection on port 8082
+    cmds:
+      - echo "Testing ArgoCD connection on port 8082..."
+      - curl -k -s https://localhost:8082 | head -10 || echo "Connection failed - make sure port-forward is running"
+
   password:
     desc: Get ArgoCD admin password
     cmds:
@@ -268,3 +279,30 @@ tasks:
     desc: Clean up simple nginx deployment
     cmds:
       - ./scripts/test-simple.sh cleanup
+
+  # ArgoCD diagnostic tasks
+  diagnose-argocd:
+    desc: Run complete ArgoCD diagnostic
+    cmds:
+      - ./scripts/diagnose-argocd.sh all
+
+  fix-argocd:
+    desc: Try to fix common ArgoCD issues
+    cmds:
+      - ./scripts/diagnose-argocd.sh fix
+
+  # Nginx testing tasks
+  test-nginx:
+    desc: Run complete nginx testing
+    cmds:
+      - ./scripts/test-nginx.sh all
+
+  test-nginx-health:
+    desc: Test nginx pod health
+    cmds:
+      - ./scripts/test-nginx.sh health
+
+  test-nginx-config:
+    desc: Check nginx configuration
+    cmds:
+      - ./scripts/test-nginx.sh config

@@ -34,29 +34,29 @@ info() {
 # Check required tools
 check_tools() {
     local missing_tools=()
-    
+
     if ! command -v kubectl &> /dev/null; then
         missing_tools+=("kubectl")
     fi
-    
+
     if ! command -v kustomize &> /dev/null; then
         missing_tools+=("kustomize")
     fi
-    
+
     if [ ${#missing_tools[@]} -ne 0 ]; then
         error "Missing required tools: ${missing_tools[*]}"
         exit 1
     fi
-    
+
     log "All required tools are available"
 }
 
 # Validate base manifests
 validate_base() {
     log "Validating base manifests..."
-    
+
     cd "$PROJECT_ROOT/apps/nginx/base"
-    
+
     # Build with kustomize
     if kustomize build . > /tmp/nginx-base.yaml; then
         log "Base kustomization build successful"
@@ -64,7 +64,7 @@ validate_base() {
         error "Base kustomization build failed"
         return 1
     fi
-    
+
     # Validate with kubectl
     if kubectl apply --dry-run=client -f /tmp/nginx-base.yaml > /dev/null; then
         log "Base manifests validation successful"
@@ -72,7 +72,7 @@ validate_base() {
         error "Base manifests validation failed"
         return 1
     fi
-    
+
     # Show resources that would be created
     info "Base resources:"
     kubectl apply --dry-run=client -f /tmp/nginx-base.yaml | grep -E "^(namespace|deployment|service|ingress|configmap)"
@@ -81,9 +81,9 @@ validate_base() {
 # Validate development overlay
 validate_development() {
     log "Validating development overlay..."
-    
+
     cd "$PROJECT_ROOT/apps/nginx/overlays/development"
-    
+
     # Build with kustomize
     if kustomize build . > /tmp/nginx-development.yaml; then
         log "Development kustomization build successful"
@@ -91,7 +91,7 @@ validate_development() {
         error "Development kustomization build failed"
         return 1
     fi
-    
+
     # Validate with kubectl
     if kubectl apply --dry-run=client -f /tmp/nginx-development.yaml > /dev/null; then
         log "Development manifests validation successful"
@@ -99,11 +99,11 @@ validate_development() {
         error "Development manifests validation failed"
         return 1
     fi
-    
+
     # Show resources that would be created
     info "Development resources:"
     kubectl apply --dry-run=client -f /tmp/nginx-development.yaml | grep -E "^(namespace|deployment|service|ingress|configmap)"
-    
+
     # Check specific development configurations
     info "Development specific configurations:"
     echo "- Replicas: $(yq '.spec.replicas' <<< "$(yq 'select(.kind == "Deployment")' /tmp/nginx-development.yaml)")"
@@ -113,9 +113,9 @@ validate_development() {
 # Validate production overlay
 validate_production() {
     log "Validating production overlay..."
-    
+
     cd "$PROJECT_ROOT/apps/nginx/overlays/production"
-    
+
     # Build with kustomize
     if kustomize build . > /tmp/nginx-production.yaml; then
         log "Production kustomization build successful"
@@ -123,7 +123,7 @@ validate_production() {
         error "Production kustomization build failed"
         return 1
     fi
-    
+
     # Validate with kubectl
     if kubectl apply --dry-run=client -f /tmp/nginx-production.yaml > /dev/null; then
         log "Production manifests validation successful"
@@ -131,11 +131,11 @@ validate_production() {
         error "Production manifests validation failed"
         return 1
     fi
-    
+
     # Show resources that would be created
     info "Production resources:"
     kubectl apply --dry-run=client -f /tmp/nginx-production.yaml | grep -E "^(namespace|deployment|service|ingress|configmap)"
-    
+
     # Check specific production configurations
     info "Production specific configurations:"
     echo "- Replicas: $(yq '.spec.replicas' <<< "$(yq 'select(.kind == "Deployment")' /tmp/nginx-production.yaml)")"
@@ -146,7 +146,7 @@ validate_production() {
 # Validate ArgoCD applications
 validate_argocd_apps() {
     log "Validating ArgoCD applications..."
-    
+
     # Validate development application
     if kubectl apply --dry-run=client -f "$PROJECT_ROOT/argocd/nginx-development.yaml" > /dev/null; then
         log "ArgoCD development application validation successful"
@@ -154,7 +154,7 @@ validate_argocd_apps() {
         error "ArgoCD development application validation failed"
         return 1
     fi
-    
+
     # Validate production application
     if kubectl apply --dry-run=client -f "$PROJECT_ROOT/argocd/nginx-production.yaml" > /dev/null; then
         log "ArgoCD production application validation successful"
@@ -162,7 +162,7 @@ validate_argocd_apps() {
         error "ArgoCD production application validation failed"
         return 1
     fi
-    
+
     # Validate AppProject
     if kubectl apply --dry-run=client -f "$PROJECT_ROOT/argocd/nginx-project.yaml" > /dev/null; then
         log "ArgoCD AppProject validation successful"
@@ -175,7 +175,7 @@ validate_argocd_apps() {
 # Show manifest differences
 show_differences() {
     log "Showing differences between environments..."
-    
+
     if [ -f /tmp/nginx-development.yaml ] && [ -f /tmp/nginx-production.yaml ]; then
         info "Key differences between development and production:"
         echo
@@ -197,7 +197,7 @@ cleanup() {
 # Main function
 main() {
     log "Starting Kubernetes manifest validation..."
-    
+
     case "${1:-all}" in
         "tools")
             check_tools
@@ -247,7 +247,7 @@ main() {
             exit 1
             ;;
     esac
-    
+
     # Always cleanup at the end
     trap cleanup EXIT
 }
