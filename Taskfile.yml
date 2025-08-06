@@ -47,9 +47,19 @@ tasks:
       - ./scripts/deploy.sh deploy-nginx
 
   deploy-all:
-    desc: Deploy everything (ArgoCD + nginx)
+    desc: Deploy everything (ArgoCD + nginx + Istio)
     cmds:
       - ./scripts/deploy.sh all
+
+  deploy-nginx-v2:
+    desc: Deploy nginx v2 application to ArgoCD
+    cmds:
+      - kubectl apply -f argocd/nginx-v2-development.yaml
+
+  deploy-istio:
+    desc: Deploy Istio service mesh configuration
+    cmds:
+      - kubectl apply -f argocd/istio-mesh.yaml
 
   test:
     desc: Test the nginx deployment
@@ -335,6 +345,75 @@ tasks:
     desc: Test nginx from local machine (requires port-forward)
     cmds:
       - echo "Testing nginx services (make sure port-forwards are running)..."
-      - curl -s http://localhost:8080/health 2>/dev/null && echo " Simple nginx - OK" || echo "✗ Simple nginx - Failed"
-      - curl -s http://localhost:8081/health 2>/dev/null && echo " Dev nginx - OK" || echo "✗ Dev nginx - Failed"
-      - curl -s http://localhost:8082/health 2>/dev/null && echo " Prod nginx - OK" || echo "✗ Prod nginx - Failed"
+      - curl -s http://localhost:8080/health 2>/dev/null && echo "✅ Simple nginx - OK" || echo "❌ Simple nginx - Failed"
+      - curl -s http://localhost:8081/health 2>/dev/null && echo "✅ Dev nginx - OK" || echo "❌ Dev nginx - Failed"
+      - curl -s http://localhost:8082/health 2>/dev/null && echo "✅ Prod nginx - OK" || echo "❌ Prod nginx - Failed"
+      - curl -s http://localhost:8083/health 2>/dev/null && echo "✅ Nginx V2 - OK" || echo "❌ Nginx V2 - Failed"
+
+  # Istio Service Mesh tasks
+  istio-install:
+    desc: Install Istio service mesh
+    cmds:
+      - ./scripts/istio.sh install
+
+  istio-check:
+    desc: Check Istio installation status
+    cmds:
+      - ./scripts/istio.sh check
+
+  istio-apply:
+    desc: Apply Istio configuration
+    cmds:
+      - ./scripts/istio.sh apply
+
+  istio-test:
+    desc: Test Istio traffic distribution
+    cmds:
+      - ./scripts/istio.sh test
+
+  istio-analytics:
+    desc: Start Istio analytics dashboards
+    cmds:
+      - ./scripts/istio.sh analytics
+
+  istio-canary-10:
+    desc: Set traffic to 90% V1, 10% V2 (canary)
+    cmds:
+      - ./scripts/istio.sh update 90 10
+
+  istio-canary-50:
+    desc: Set traffic to 50% V1, 50% V2 (blue-green)
+    cmds:
+      - ./scripts/istio.sh update 50 50
+
+  istio-rollback:
+    desc: Set traffic to 100% V1, 0% V2 (rollback)
+    cmds:
+      - ./scripts/istio.sh update 100 0
+
+  istio-promote:
+    desc: Set traffic to 0% V1, 100% V2 (promote V2)
+    cmds:
+      - ./scripts/istio.sh update 0 100
+
+  istio-cleanup:
+    desc: Remove Istio service mesh
+    cmds:
+      - ./scripts/istio.sh cleanup
+
+  # Nginx V2 tasks
+  nginx-v2-forward:
+    desc: Port forward to nginx v2 service
+    cmds:
+      - echo "Nginx V2 will be available at http://localhost:8083"
+      - kubectl port-forward svc/nginx-v2-service -n nginx-app 8083:80
+
+  nginx-v2-logs:
+    desc: Show nginx v2 logs
+    cmds:
+      - kubectl logs -l app.kubernetes.io/name=nginx-v2 -n {{.NAMESPACE}} --tail=50
+
+  nginx-v2-build:
+    desc: Build nginx v2 manifests with kustomize
+    cmds:
+      - kustomize build apps/nginx-v2/overlays/development

@@ -1,0 +1,70 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nginx-virtual-service
+  namespace: nginx-app
+  labels:
+    app.kubernetes.io/name: nginx-vs
+spec:
+  hosts:
+  - nginx.local
+  - nginx-v2.local
+  - "*"
+  gateways:
+  - nginx-gateway
+  http:
+  # Route for V2 specific requests
+  - match:
+    - headers:
+        version:
+          exact: v2
+    - uri:
+        prefix: /v2
+    route:
+    - destination:
+        host: nginx-v2-service
+        port:
+          number: 80
+    fault:
+      delay:
+        percentage:
+          value: 0.1
+        fixedDelay: 5s
+  
+  # Route for health checks - both versions
+  - match:
+    - uri:
+        exact: /health
+    route:
+    - destination:
+        host: nginx-service
+        port:
+          number: 80
+      weight: 50
+    - destination:
+        host: nginx-v2-service
+        port:
+          number: 80
+      weight: 50
+  
+  # Canary routing - 80% to V1, 20% to V2
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: nginx-service
+        port:
+          number: 80
+        subset: v1
+      weight: 80
+    - destination:
+        host: nginx-v2-service
+        port:
+          number: 80
+        subset: v2
+      weight: 20
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s

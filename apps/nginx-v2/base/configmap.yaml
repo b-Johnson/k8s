@@ -1,0 +1,175 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-v2-config
+  namespace: nginx-app
+  labels:
+    app.kubernetes.io/name: nginx-v2
+    app.kubernetes.io/component: web-server
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+        
+        # Use temporary directories that don't require root
+        client_body_temp_path /var/cache/nginx/client_temp;
+        proxy_temp_path       /var/cache/nginx/proxy_temp_path;
+        fastcgi_temp_path     /var/cache/nginx/fastcgi_temp;
+        uwsgi_temp_path       /var/cache/nginx/uwsgi_temp;
+        scgi_temp_path        /var/cache/nginx/scgi_temp;
+        
+        # Basic settings
+        sendfile        on;
+        tcp_nopush      on;
+        tcp_nodelay     on;
+        keepalive_timeout  65;
+        types_hash_max_size 2048;
+        
+        # Logging
+        access_log  /var/log/nginx/access.log;
+        error_log   /var/log/nginx/error.log;
+        
+        # Gzip compression
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            application/atom+xml
+            application/javascript
+            application/json
+            application/rss+xml
+            application/vnd.ms-fontobject
+            application/x-font-ttf
+            application/x-web-app-manifest+json
+            application/xhtml+xml
+            application/xml
+            font/opentype
+            image/svg+xml
+            image/x-icon
+            text/css
+            text/plain
+            text/x-component;
+        
+        server {
+            listen       8080;
+            server_name  localhost;
+            
+            location / {
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+            }
+            
+            # Health check endpoint
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+            
+            # Version endpoint for testing
+            location /version {
+                access_log off;
+                return 200 "v2.0\n";
+                add_header Content-Type text/plain;
+            }
+            
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   /usr/share/nginx/html;
+            }
+        }
+    }
+  
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Nginx V2 - Service Mesh</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 40px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+            .container {
+                background-color: rgba(255, 255, 255, 0.95);
+                color: #333;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            }
+            h1 {
+                color: #4c51bf;
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .info {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+            }
+            .version-badge {
+                display: inline-block;
+                background: #48bb78;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-weight: bold;
+                margin: 10px 0;
+            }
+            .feature-list {
+                list-style: none;
+                padding: 0;
+            }
+            .feature-list li {
+                background: #f7fafc;
+                margin: 10px 0;
+                padding: 10px;
+                border-left: 4px solid #4c51bf;
+                border-radius: 4px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 Nginx V2 - Service Mesh Edition</h1>
+            <div class="version-badge">Version 2.0</div>
+            
+            <div class="info">
+                <p><strong>🌐 Service:</strong> Nginx V2 Web Server</p>
+                <p><strong>📦 Deployment:</strong> Kubernetes + ArgoCD + Istio</p>
+                <p><strong>🔀 Traffic:</strong> Managed by Istio Service Mesh</p>
+                <p><strong>🛡️ Security:</strong> Non-root container (UID: 101)</p>
+                <p><strong>⚡ Features:</strong> Health checks, Version endpoint, Gzip compression</p>
+            </div>
+            
+            <h3>🔧 Service Mesh Features:</h3>
+            <ul class="feature-list">
+                <li>🔄 <strong>Traffic Splitting:</strong> Canary deployments between V1 and V2</li>
+                <li>📊 <strong>Observability:</strong> Distributed tracing and metrics</li>
+                <li>🔒 <strong>Security:</strong> mTLS between services</li>
+                <li>🌍 <strong>Load Balancing:</strong> Advanced routing strategies</li>
+                <li>🔧 <strong>Circuit Breaking:</strong> Resilience patterns</li>
+            </ul>
+            
+            <p>This is <strong>Version 2</strong> of the nginx application, designed to work with Istio service mesh for advanced traffic management and observability.</p>
+            
+            <div style="margin-top: 30px; padding: 15px; background: #edf2f7; border-radius: 8px;">
+                <strong>🔍 Testing Endpoints:</strong><br>
+                • <code>/health</code> - Health check<br>
+                • <code>/version</code> - Service version<br>
+                • <code>/</code> - This page
+            </div>
+        </div>
+    </body>
+    </html>

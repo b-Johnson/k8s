@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-v2-deployment
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+      - name: nginx
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        env:
+        - name: ENVIRONMENT
+          value: "development"
+        - name: DEBUG
+          value: "true"

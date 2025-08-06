@@ -1,20 +1,35 @@
-# Kubernetes Nginx Application with ArgoCD
+# Kubernetes nginx Application with Istio Service Mesh
 
-This repository contains a complete implementation of a Kubernetes-based nginx application deployed using ArgoCD for GitOps continuous deployment.
+This repository contains a comprehensive Kubernetes application featuring:
+- **Two nginx services** (V1 and V2) for demonstrating service mesh capabilities  
+- **ArgoCD GitOps deployment** for automated application lifecycle management
+- **Istio service mesh** for advanced traffic management, security, and observability
+- **Kustomize overlays** for environment-specific configurations
+- **Comprehensive tooling** with task automation and debugging scripts
 
 ## 🏗️ Architecture Overview
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Istio Gateway │    │  VirtualService │    │ DestinationRule │
 │                 │    │                 │    │                 │
-│   Git Repository │───▶│     ArgoCD      │───▶│   Kubernetes    │
-│                 │    │                 │    │     Cluster     │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-  Source of Truth         GitOps Controller       Running Apps
+│ nginx.local     │───▶│ Traffic Split:  │───▶│ Load Balancing  │
+│ nginx-v2.local  │    │ • 80% → V1      │    │ Circuit Breaking│
+└─────────────────┘    │ • 20% → V2      │    │ Connection Pool │
+                       │ • /v2 → V2      │    └─────────────────┘
+                       │ • Header-based  │
+                       └─────────────────┘
+                                │
+                    ┌───────────┴───────────┐
+                    │                       │
+            ┌───────▼────────┐     ┌───────▼────────┐
+            │  nginx-service │     │nginx-v2-service│
+            │  (Version 1)   │     │  (Version 2)   │
+            │                │     │                │
+            │ • Basic UI     │     │ • Enhanced UI  │
+            │ • /health      │     │ • /version     │
+            │ • Port 8080    │     │ • Gradient BG  │
+            └────────────────┘     └────────────────┘
 ```
 
 ## 📁 Project Structure

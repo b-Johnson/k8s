@@ -1,0 +1,29 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: nginx-gateway
+  namespace: nginx-app
+  labels:
+    app.kubernetes.io/name: nginx-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - nginx.local
+    - nginx-v2.local
+    - "*"
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: nginx-tls-secret
+    hosts:
+    - nginx.local
+    - nginx-v2.local

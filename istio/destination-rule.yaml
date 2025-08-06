@@ -1,0 +1,59 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nginx-destination-rule
+  namespace: nginx-app
+  labels:
+    app.kubernetes.io/name: nginx-dr
+spec:
+  host: nginx-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 5
+    circuitBreaker:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+    trafficPolicy:
+      loadBalancer:
+        simple: ROUND_ROBIN
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nginx-v2-destination-rule
+  namespace: nginx-app
+  labels:
+    app.kubernetes.io/name: nginx-v2-dr
+spec:
+  host: nginx-v2-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 5
+    circuitBreaker:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+  subsets:
+  - name: v2
+    labels:
+      version: v2
+    trafficPolicy:
+      loadBalancer:
+        simple: ROUND_ROBIN
