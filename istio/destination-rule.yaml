@@ -16,8 +16,8 @@ spec:
       http:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 5
-    circuitBreaker:
-      consecutiveErrors: 3
+    outlierDetection:
+      consecutiveGatewayErrors: 3
       interval: 30s
       baseEjectionTime: 30s
   subsets:
@@ -46,8 +46,8 @@ spec:
       http:
         http1MaxPendingRequests: 50
         maxRequestsPerConnection: 5
-    circuitBreaker:
-      consecutiveErrors: 3
+    outlierDetection:
+      consecutiveGatewayErrors: 3
       interval: 30s
       baseEjectionTime: 30s
   subsets:

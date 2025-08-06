@@ -6,10 +6,6 @@ namespace: nginx-app
 resources:
 - ../../base
 
-# Development-specific patches
-patchesStrategicMerge:
-- deployment-patch.yaml
-
 # Development environment settings
 replicas:
 - name: nginx-v2-deployment
@@ -19,13 +15,7 @@ images:
 - name: nginx
   newTag: 1.25-alpine
 
-commonLabels:
-  environment: development
-  app.kubernetes.io/instance: development
-
-configMapGenerator:
-- name: nginx-v2-config
-  behavior: merge
-  literals:
-  - ENVIRONMENT=development
-  - DEBUG=true
+labels:
+- pairs:
+    environment: development
+    app.kubernetes.io/instance: development
