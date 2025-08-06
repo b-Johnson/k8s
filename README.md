@@ -1,7 +1,7 @@
 # Kubernetes nginx Application with Istio Service Mesh
 
 This repository contains a comprehensive Kubernetes application featuring:
-- **Two nginx services** (V1 and V2) for demonstrating service mesh capabilities  
+- **Two nginx services** (V1 and V2) for demonstrating service mesh capabilities
 - **ArgoCD GitOps deployment** for automated application lifecycle management
 - **Istio service mesh** for advanced traffic management, security, and observability
 - **Kustomize overlays** for environment-specific configurations

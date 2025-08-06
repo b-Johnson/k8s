@@ -11,29 +11,29 @@ data:
     events {
         worker_connections 1024;
     }
-    
+
     http {
         include       /etc/nginx/mime.types;
         default_type  application/octet-stream;
-        
+
         # Use temporary directories that don't require root
         client_body_temp_path /var/cache/nginx/client_temp;
         proxy_temp_path       /var/cache/nginx/proxy_temp_path;
         fastcgi_temp_path     /var/cache/nginx/fastcgi_temp;
         uwsgi_temp_path       /var/cache/nginx/uwsgi_temp;
         scgi_temp_path        /var/cache/nginx/scgi_temp;
-        
+
         # Basic settings
         sendfile        on;
         tcp_nopush      on;
         tcp_nodelay     on;
         keepalive_timeout  65;
         types_hash_max_size 2048;
-        
+
         # Logging
         access_log  /var/log/nginx/access.log;
         error_log   /var/log/nginx/error.log;
-        
+
         # Gzip compression
         gzip on;
         gzip_vary on;
@@ -56,37 +56,37 @@ data:
             text/css
             text/plain
             text/x-component;
-        
+
         server {
             listen       8080;
             server_name  localhost;
-            
+
             location / {
                 root   /usr/share/nginx/html;
                 index  index.html index.htm;
             }
-            
+
             # Health check endpoint
             location /health {
                 access_log off;
                 return 200 "healthy\n";
                 add_header Content-Type text/plain;
             }
-            
+
             # Version endpoint for testing
             location /version {
                 access_log off;
                 return 200 "v2.0\n";
                 add_header Content-Type text/plain;
             }
-            
+
             error_page   500 502 503 504  /50x.html;
             location = /50x.html {
                 root   /usr/share/nginx/html;
             }
         }
     }
-  
+
   index.html: |
     <!DOCTYPE html>
     <html>
@@ -144,7 +144,7 @@ data:
         <div class="container">
             <h1>🚀 Nginx V2 - Service Mesh Edition</h1>
             <div class="version-badge">Version 2.0</div>
-            
+
             <div class="info">
                 <p><strong>🌐 Service:</strong> Nginx V2 Web Server</p>
                 <p><strong>📦 Deployment:</strong> Kubernetes + ArgoCD + Istio</p>
@@ -152,7 +152,7 @@ data:
                 <p><strong>🛡️ Security:</strong> Non-root container (UID: 101)</p>
                 <p><strong>⚡ Features:</strong> Health checks, Version endpoint, Gzip compression</p>
             </div>
-            
+
             <h3>🔧 Service Mesh Features:</h3>
             <ul class="feature-list">
                 <li>🔄 <strong>Traffic Splitting:</strong> Canary deployments between V1 and V2</li>
@@ -161,9 +161,9 @@ data:
                 <li>🌍 <strong>Load Balancing:</strong> Advanced routing strategies</li>
                 <li>🔧 <strong>Circuit Breaking:</strong> Resilience patterns</li>
             </ul>
-            
+
             <p>This is <strong>Version 2</strong> of the nginx application, designed to work with Istio service mesh for advanced traffic management and observability.</p>
-            
+
             <div style="margin-top: 30px; padding: 15px; background: #edf2f7; border-radius: 8px;">
                 <strong>🔍 Testing Endpoints:</strong><br>
                 • <code>/health</code> - Health check<br>

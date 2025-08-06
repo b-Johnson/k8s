@@ -30,7 +30,7 @@ spec:
         percentage:
           value: 0.1
         fixedDelay: 5s
-  
+
   # Route for health checks - both versions
   - match:
     - uri:
@@ -46,7 +46,7 @@ spec:
         port:
           number: 80
       weight: 50
-  
+
   # Canary routing - 80% to V1, 20% to V2
   - match:
     - uri:

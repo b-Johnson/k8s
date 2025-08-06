@@ -13,16 +13,16 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: nginx-apps
-  
+
   source:
     repoURL: .
     targetRevision: HEAD
     path: istio
-  
+
   destination:
     server: https://kubernetes.default.svc
     namespace: nginx-app
-  
+
   syncPolicy:
     automated:
       prune: true
@@ -38,5 +38,5 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
-  
+
   revisionHistoryLimit: 3
